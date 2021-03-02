@@ -11,13 +11,13 @@ namespace ChatClient
 {
     class ClientProgram
     {
-        static async Task Main(string[] args)
+        static async Task MainAsync(string[] args)
         {
             Console.WriteLine("Enter your username");
             Client client = new Client(IPAddress.Loopback, 8005, Console.ReadLine());
             client.MessageReceived += msg => Console.WriteLine(msg);
 
-            client.Connect();
+            client.ConnectAsync();
 
             Console.WriteLine("connected to server");
 
@@ -31,10 +31,12 @@ namespace ChatClient
                 else await client.SendAsync(new TextMessage(msg));
             }
 
+            await client.Disconnect();
+        }
 
-            client.Disconnect();
-
-
+        static void Main(string[] args)
+        {
+            MainAsync(args).Wait();
         }
     }
 }

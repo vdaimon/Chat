@@ -12,7 +12,7 @@ namespace ChatServer
     {
         public Protocol ClientProtocol { get; }
         public string ClientName { get; set; }
-
+        public Socket Socket { get; }
         public Communicator ClientCommunicator { get; }
 
 
@@ -21,6 +21,7 @@ namespace ChatServer
             ClientName = name;
             ClientProtocol = new Protocol(new NetworkStream(socket));
             ClientCommunicator = new Communicator(ClientProtocol);
+            Socket = socket;
         }
     }
 }

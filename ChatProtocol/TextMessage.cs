@@ -10,7 +10,7 @@ namespace ChatProtocol
     public class TextMessage : IGetBytes
     {
         public string Text { get; }
-        public MessageType MessageType => MessageType.Text;
+        MessageType IGetBytes.MessageType => MessageType.Text;
 
         public TextMessage(byte[] message)
         {
@@ -21,7 +21,7 @@ namespace ChatProtocol
         {
             Text = message;
         }
-        public byte[] GetBytes()
+        byte[] IGetBytes.GetBytes()
         {
             return Encoding.UTF8.GetBytes(Text);
         }

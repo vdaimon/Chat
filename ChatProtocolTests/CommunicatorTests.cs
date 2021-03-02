@@ -46,8 +46,7 @@ namespace ChatProtocolTests
         {
             var data = new AuthorizationMessage("Dmk");
             var res = await ReceiveAsyncObject<AuthorizationMessage>(data);
-            Assert.AreEqual(data.UserName, res.UserName); ;
-
+            Assert.AreEqual(data.UserName, res.UserName);
         }
 
         [TestMethod]

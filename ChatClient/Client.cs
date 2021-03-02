@@ -26,7 +26,7 @@ namespace ChatClient
             Name = name;
         }
         
-        public async Task Connect ()
+        public async void ConnectAsync ()
         {
             await _client.ConnectAsync(_endPoint);
 
@@ -77,15 +77,11 @@ namespace ChatClient
              await _communicator.SendAsync(message);
         }
 
-        public async void Disconnect ()
+        public async Task Disconnect ()
         {
             await SendAsync(new DisconnectionNotificationMessage(Name));
             _client.Shutdown(SocketShutdown.Both);
             _client.Close();
         }
-
-        
-
-
     }
 }
