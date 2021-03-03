@@ -1,0 +1,62 @@
+﻿<Window x:Class="WPFClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfChat"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!--Main button panel-->
+        <Grid Grid.Row="0">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Settings" Margin="2" Padding="5"/>
+                <Button Content="Disconnect" Margin="2" Padding="5"/>
+            </StackPanel>
+        </Grid>
+
+        <!--Main window-->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!--Connected client window-->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBox Grid.Row="0" Text="Connected clients:" Margin="2" Padding="5"/>
+                <StackPanel Grid.Row="1">
+                </StackPanel>
+            </Grid>
+
+            <!--Chat window-->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!--Message view window-->
+                <StackPanel Grid.Row="0">
+
+                </StackPanel>
+
+                <!--Message sending window-->
+                <StackPanel Grid.Row="1">
+                    <TextBlock Margin="2" Padding="5"/>
+                    <Button Content="Send" Margin="2" Padding="5"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+    </Grid>
+</Window>
