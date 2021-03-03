@@ -17,8 +17,20 @@ namespace ChatClient
         private Communicator _communicator;
         public string Name { get; }
 
-        public delegate void MessageHandler(string message);
-        public event MessageHandler MessageReceived;
+        public delegate void TextMessageHandler(string message);
+        public event TextMessageHandler TextMessageReceived;
+
+        public delegate void ConnectionNotificationMessageHandler(string message);
+        public event ConnectionNotificationMessageHandler ConnectionNotificationMessageReceived;
+
+        public delegate void DisconnectionNotificationMessageHandler(string message);
+        public event DisconnectionNotificationMessageHandler DisconnectionNotificationMessageReceived;
+
+        public delegate void ConnectionListMessageHandler(string message);
+        public event ConnectionListMessageHandler ConnectionListMessageReceived;
+
+        public delegate void ServerStopNotificationMessageHandler(string message);
+        public event ServerStopNotificationMessageHandler ServerStopNotificationMessageReceived;
 
         public Client (IPAddress addr, int port, string name)
         {
@@ -43,28 +55,28 @@ namespace ChatClient
                 {
                     case TextMessage tm:
                         {
-                            MessageReceived(tm.Text);
+                            TextMessageReceived(tm.Text);
                             break;
                         }
                     case ConnectionNotificationMessage cm:
                         {
-                            MessageReceived($"{cm.UserName} connected");
+                            ConnectionNotificationMessageReceived($"{cm.UserName} connected");
                             break;
                         }
                     case DisconnectionNotificationMessage dm:
                         {
-                            MessageReceived($"{dm.UserName} disconnected");
+                            DisconnectionNotificationMessageReceived($"{dm.UserName} disconnected");
                             break;
                         }
                     case ConnectionListMessage clm:
                         {
                             foreach (var el in clm.UserNames)
-                                MessageReceived(el);
+                                ConnectionListMessageReceived(el);
                             break;
                         }
                     case ServerStopNotificationMessage ssm:
                         {
-                            MessageReceived("Stopping the server");
+                            ServerStopNotificationMessageReceived("Stopping the server");
                             break;
                         }
                     

@@ -15,7 +15,12 @@ namespace ChatClient
         {
             Console.WriteLine("Enter your username");
             Client client = new Client(IPAddress.Loopback, 8005, Console.ReadLine());
-            client.MessageReceived += msg => Console.WriteLine(msg);
+
+            client.TextMessageReceived += msg => Console.WriteLine(msg);
+            client.ConnectionNotificationMessageReceived += msg => Console.WriteLine(msg);
+            client.DisconnectionNotificationMessageReceived += msg => Console.WriteLine(msg);
+            client.ConnectionListMessageReceived += msg => Console.WriteLine(msg);
+            client.ServerStopNotificationMessageReceived += msg => Console.WriteLine(msg);
 
             client.ConnectAsync();
 
