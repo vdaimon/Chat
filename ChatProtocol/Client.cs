@@ -8,9 +8,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ChatClient
+namespace ChatProtocol
 {
-    class Client
+    public class Client
     {
         private IPEndPoint _endPoint;
         private Socket _client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

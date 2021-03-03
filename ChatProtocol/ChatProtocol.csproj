@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuthorizationMessage.cs" />
+    <Compile Include="Client.cs" />
     <Compile Include="Communicator.cs" />
     <Compile Include="CommunicatorException.cs" />
     <Compile Include="ConnectionListMessage.cs" />
