@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,19 +12,31 @@ namespace ChatProtocol
     {
         public string Text { get; }
         MessageType IGetBytes.MessageType => MessageType.Text;
+        public string UserName { get; }
 
         public TextMessage(byte[] message)
         {
-            Text = Encoding.UTF8.GetString(message);
+            using(var stream = new MemoryStream(message))
+            {
+                UserName = stream.ReadString();
+                Text = stream.ReadString();
+            }
         }
 
-        public TextMessage(string message)
+        public TextMessage(string message, string userName)
         {
             Text = message;
+            UserName = userName;
         }
+
         byte[] IGetBytes.GetBytes()
         {
-            return Encoding.UTF8.GetBytes(Text);
+            using (var stream = new MemoryStream())
+            {
+                stream.WriteString(UserName);
+                stream.WriteString(Text);
+                return stream.ToArray();
+            }
         }
     }
 }

@@ -11,18 +11,20 @@ namespace ChatClient
 {
     class ClientProgram
     {
+
         static async Task MainAsync(string[] args)
         {
             Console.WriteLine("Enter your username");
             Client client = new Client(IPAddress.Loopback, 8005, Console.ReadLine());
 
-            client.TextMessageReceived += msg => Console.WriteLine(msg);
-            client.ConnectionNotificationMessageReceived += msg => Console.WriteLine(msg);
-            client.DisconnectionNotificationMessageReceived += msg => Console.WriteLine(msg);
-            client.ConnectionListMessageReceived += msg => Console.WriteLine(msg);
-            client.ServerStopNotificationMessageReceived += msg => Console.WriteLine(msg);
+            client.TextMessageReceived += (_, msg) => Console.WriteLine(msg);
+            client.ConnectionNotificationMessageReceived += (_, msg) => Console.WriteLine(msg);
+            client.DisconnectionNotificationMessageReceived += (_, msg) => Console.WriteLine(msg);
+            client.ConnectionListMessageReceived += (_, msg) => Console.WriteLine(msg);
+            client.ServerStopNotificationMessageReceived += (_, msg) => Console.WriteLine(msg);
 
-            client.ConnectAsync();
+            await client.ConnectAsync();
+            client.Listen();
 
             Console.WriteLine("connected to server");
 
@@ -33,7 +35,7 @@ namespace ChatClient
                     await client.SendAsync(new RequestConnectionListMessage(client.Name));
                 else if (msg == "end")
                     break;
-                else await client.SendAsync(new TextMessage(msg));
+                else await client.SendAsync(new TextMessage(msg, client.Name));
             }
 
             await client.Disconnect();

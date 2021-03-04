@@ -52,7 +52,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task ReceiveAsyncText()
         {
-            var data = new TextMessage("Hello, world!");
+            var data = new TextMessage("Hello, world!","Dmk");
             var res = await ReceiveAsyncObject<TextMessage>(data);
             Assert.AreEqual(data.Text, res.Text);
         }
@@ -116,7 +116,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task SendAsyncText()
         {
-            await SendAsyncObject(new TextMessage("Hello, world!"));
+            await SendAsyncObject(new TextMessage("Hello, world!", "Dmk"));
         }
 
         [TestMethod]

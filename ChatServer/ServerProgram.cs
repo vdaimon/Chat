@@ -58,7 +58,7 @@ namespace ChatServer
                         if (text == null)
                             return;
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + $": {client.ClientName}: {text}");
-                        await SendToEveryone(client, new TextMessage($"{client.ClientName}: {text}"));
+                        await SendToEveryone(client, new TextMessage(text, client.ClientName));
                         break;
                     }
 

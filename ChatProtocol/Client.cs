@@ -17,20 +17,11 @@ namespace ChatProtocol
         private Communicator _communicator;
         public string Name { get; }
 
-        public delegate void TextMessageHandler(string message);
-        public event TextMessageHandler TextMessageReceived;
-
-        public delegate void ConnectionNotificationMessageHandler(string message);
-        public event ConnectionNotificationMessageHandler ConnectionNotificationMessageReceived;
-
-        public delegate void DisconnectionNotificationMessageHandler(string message);
-        public event DisconnectionNotificationMessageHandler DisconnectionNotificationMessageReceived;
-
-        public delegate void ConnectionListMessageHandler(string message);
-        public event ConnectionListMessageHandler ConnectionListMessageReceived;
-
-        public delegate void ServerStopNotificationMessageHandler(string message);
-        public event ServerStopNotificationMessageHandler ServerStopNotificationMessageReceived;
+        public event EventHandler<object> TextMessageReceived;
+        public event EventHandler<object> ConnectionNotificationMessageReceived;
+        public event EventHandler<object> DisconnectionNotificationMessageReceived;
+        public event EventHandler<object> ConnectionListMessageReceived;
+        public event EventHandler<object> ServerStopNotificationMessageReceived;
 
         public Client (IPAddress addr, int port, string name)
         {
@@ -38,7 +29,7 @@ namespace ChatProtocol
             Name = name;
         }
         
-        public async void ConnectAsync ()
+        public async Task ConnectAsync ()
         {
             await _client.ConnectAsync(_endPoint);
 
@@ -47,39 +38,75 @@ namespace ChatProtocol
             await _communicator.SendAsync(new AuthorizationMessage(Name));
 
 
+            //while (_client.Connected)
+            //{
+            //    var data = await _communicator.ReceiveAsync();
+            //    switch (data)
+            //    {
+            //        case TextMessage tm:
+            //            {
+            //                TextMessageReceived(tm);
+            //                break;
+            //            }
+            //        case ConnectionNotificationMessage cm:
+            //            {
+            //                ConnectionNotificationMessageReceived(cm);
+            //                break;
+            //            }
+            //        case DisconnectionNotificationMessage dm:
+            //            {
+            //                DisconnectionNotificationMessageReceived($"{dm.UserName} disconnected");
+            //                break;
+            //            }
+            //        case ConnectionListMessage clm:
+            //            {
+            //                foreach (var el in clm.UserNames)
+            //                    ConnectionListMessageReceived(el);
+            //                break;
+            //            }
+            //        case ServerStopNotificationMessage ssm:
+            //            {
+            //                ServerStopNotificationMessageReceived("Stopping the server");
+            //                break;
+            //            }
+
+            //    }
+            //}
+        }
+
+        public async void Listen()
+        {
             while (_client.Connected)
             {
                 var data = await _communicator.ReceiveAsync();
-
-                switch(data)
+                switch (data)
                 {
                     case TextMessage tm:
                         {
-                            TextMessageReceived(tm.Text);
+                            TextMessageReceived(this, tm);
                             break;
                         }
                     case ConnectionNotificationMessage cm:
                         {
-                            ConnectionNotificationMessageReceived($"{cm.UserName} connected");
+                            ConnectionNotificationMessageReceived(this, cm);
                             break;
                         }
                     case DisconnectionNotificationMessage dm:
                         {
-                            DisconnectionNotificationMessageReceived($"{dm.UserName} disconnected");
+                            DisconnectionNotificationMessageReceived(this, dm);
                             break;
                         }
                     case ConnectionListMessage clm:
                         {
-                            foreach (var el in clm.UserNames)
-                                ConnectionListMessageReceived(el);
+                            ConnectionListMessageReceived(this, clm);
                             break;
                         }
                     case ServerStopNotificationMessage ssm:
                         {
-                            ServerStopNotificationMessageReceived("Stopping the server");
+                            ServerStopNotificationMessageReceived(this, ssm);
                             break;
                         }
-                    
+
                 }
             }
         }
