@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,23 +12,28 @@ using System.Windows.Controls;
 
 namespace WPFClient
 {
-    public class ChatWindowDataContext
+    public class ChatWindowDataContext : INPC
     {
         public string UserName { get; }
         public Client Client { get; }
         public ObservableCollection<string> ConnectionList { get; } = new ObservableCollection<string>();
         public ObservableCollection<TextMessage> Messages { get; } = new ObservableCollection<TextMessage>();
 
+        private string _message;
+        public string Message { get => _message; set => Set(ref _message, value); }
+
         public ChatWindowDataContext(string userName)
         {
             UserName = userName;
             Client = new Client(IPAddress.Loopback, 8005, userName);
         }
+
+
         public async void ClientAction()
         {
             await Client.ConnectAsync();
             Client.Listen();
-            Client.ConnectionListMessageReceived += ( _, clm) =>
+            Client.ConnectionListMessageReceived += (_, clm) =>
             {
                 var msg = (ConnectionListMessage)clm;
 
@@ -56,21 +63,32 @@ namespace WPFClient
             await Client.SendAsync(rclm);
 
         }
-    }
-
-        /// <summary>
-        /// Interaction logic for ChatWindow.xaml
-        /// </summary>
-        public partial class ChatWindow : Window
+        public async void SendTextAsync()
         {
-            private ChatWindowDataContext _dataContext;
-            public ChatWindow(string userName)
-            {
-                InitializeComponent();
-                _dataContext = new ChatWindowDataContext(userName);
-                _dataContext.ClientAction();
-                DataContext = _dataContext;
-            }
+            Messages.Add(new TextMessage(Message, "You"));
+            await Client.SendAsync(new TextMessage(Message, UserName));
+            Message = null;
         }
     }
+
+    /// <summary>
+    /// Interaction logic for ChatWindow.xaml
+    /// </summary>
+    public partial class ChatWindow : Window
+    {
+        private ChatWindowDataContext _dataContext;
+        public ChatWindow(string userName)
+        {
+            InitializeComponent();
+            _dataContext = new ChatWindowDataContext(userName);
+            _dataContext.ClientAction();
+            DataContext = _dataContext;
+        }
+
+        private void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+            _dataContext.SendTextAsync();
+        }
+    }
+}
 

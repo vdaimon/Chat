@@ -68,8 +68,11 @@
 
                 <!--Message sending window-->
                 <StackPanel Grid.Row="1">
-                    <TextBlock Margin="2" Padding="5"/>
-                    <Button Content="Send" Margin="2" Padding="5"/>
+                    <TextBox Margin="2" Padding="5"
+                               Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Content="Send" Margin="2" Padding="5"
+                            Click="SendButton_Click"
+                            IsDefault="True"/>
                 </StackPanel>
             </Grid>
         </Grid>

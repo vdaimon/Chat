@@ -14,7 +14,8 @@
             <TextBox x:Name="Username" Margin="2" Padding="5"/>
             <Button  Margin="2" Padding="5"
                      Content="Connect"
-                     Click="ConnectButton_Click"/>
+                     Click="ConnectButton_Click"
+                     IsDefault="True"/>
         </StackPanel>
     </Grid>
 </Window>
