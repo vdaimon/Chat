@@ -17,11 +17,33 @@ namespace ChatClient
             Console.WriteLine("Enter your username");
             Client client = new Client(IPAddress.Loopback, 8005, Console.ReadLine());
 
-            client.TextMessageReceived += (_, msg) => Console.WriteLine(msg);
-            client.ConnectionNotificationMessageReceived += (_, msg) => Console.WriteLine(msg);
-            client.DisconnectionNotificationMessageReceived += (_, msg) => Console.WriteLine(msg);
-            client.ConnectionListMessageReceived += (_, msg) => Console.WriteLine(msg);
-            client.ServerStopNotificationMessageReceived += (_, msg) => Console.WriteLine(msg);
+            client.TextMessageReceived += (_, msg) => 
+            {
+                var res = (TextMessage)msg;
+                Console.WriteLine($"{res.UserName}: {res.Text}");
+            }; 
+            client.ConnectionNotificationMessageReceived += (_, msg) =>
+            {
+                var res = (ConnectionNotificationMessage)msg;
+                Console.WriteLine(res.UserName + " connected");
+            };
+            client.DisconnectionNotificationMessageReceived += (_, msg) =>
+            {
+                var res = (DisconnectionNotificationMessage)msg;
+                Console.WriteLine(res.UserName + " disconnected");
+            };
+            client.ConnectionListMessageReceived += (_, msg) => 
+            {
+                var res = (ConnectionListMessage)msg;
+                Console.WriteLine("Connection clients");
+                foreach (var el in res.UserNames)
+                    Console.WriteLine(el);
+            };
+            client.ServerStopNotificationMessageReceived += (_, msg) =>
+            {
+                Console.WriteLine("Server stopped");
+                client.Disconnect().Wait();
+            };
 
             await client.ConnectAsync();
             client.Listen();

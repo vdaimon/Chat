@@ -34,7 +34,8 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBox Grid.Row="0" Text="Connected clients:" Margin="2" Padding="5"/>
-                <ListBox Grid.Row="1" ItemsSource="{Binding ConnectionList}"/>
+                <ListBox Grid.Row="1" ItemsSource="{Binding ConnectionList}"
+                         Margin="2"/>
             </Grid>
 
             <!--Chat window-->
@@ -45,7 +46,8 @@
                 </Grid.RowDefinitions>
 
                 <!--Message view window-->
-                <ListBox ItemsSource="{Binding Messages}">
+                <ListBox ItemsSource="{Binding Messages}"
+                         Margin="2">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="2.5" 
@@ -53,7 +55,7 @@
                                     CornerRadius="5"
                                     BorderThickness="1"
                                     BorderBrush="Black"
-                                    Background="Ivory"> 
+                                    Background="Ivory">
                                 <StackPanel Orientation="Vertical">
                                     <TextBlock Text="{Binding UserName}"
                                                Padding="2.5"
@@ -72,10 +74,10 @@
                                Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
                     <Button Content="Send" Margin="2" Padding="5"
                             Click="SendButton_Click"
-                            IsDefault="True"/>
+                            IsDefault="True"
+                            IsEnabled="{Binding EnableSendButtonFlag}"/>
                 </StackPanel>
             </Grid>
         </Grid>
-        
     </Grid>
 </Window>

@@ -28,50 +28,14 @@ namespace ChatProtocol
             _endPoint = new IPEndPoint(addr, port);
             Name = name;
         }
-        
-        public async Task ConnectAsync ()
+
+        public async Task ConnectAsync()
         {
             await _client.ConnectAsync(_endPoint);
 
             _communicator = new Communicator(new Protocol(new NetworkStream(_client)));
 
             await _communicator.SendAsync(new AuthorizationMessage(Name));
-
-
-            //while (_client.Connected)
-            //{
-            //    var data = await _communicator.ReceiveAsync();
-            //    switch (data)
-            //    {
-            //        case TextMessage tm:
-            //            {
-            //                TextMessageReceived(tm);
-            //                break;
-            //            }
-            //        case ConnectionNotificationMessage cm:
-            //            {
-            //                ConnectionNotificationMessageReceived(cm);
-            //                break;
-            //            }
-            //        case DisconnectionNotificationMessage dm:
-            //            {
-            //                DisconnectionNotificationMessageReceived($"{dm.UserName} disconnected");
-            //                break;
-            //            }
-            //        case ConnectionListMessage clm:
-            //            {
-            //                foreach (var el in clm.UserNames)
-            //                    ConnectionListMessageReceived(el);
-            //                break;
-            //            }
-            //        case ServerStopNotificationMessage ssm:
-            //            {
-            //                ServerStopNotificationMessageReceived("Stopping the server");
-            //                break;
-            //            }
-
-            //    }
-            //}
         }
 
         public async void Listen()
@@ -106,7 +70,6 @@ namespace ChatProtocol
                             ServerStopNotificationMessageReceived(this, ssm);
                             break;
                         }
-
                 }
             }
         }

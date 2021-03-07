@@ -14,13 +14,14 @@ namespace WPFClient
 {
     public class ChatWindowDataContext : INPC
     {
+        private bool _EnableSendButtonFlag;
+        private string _message;
+        public string Message { get => _message; set { Set(ref _message, value); if (_message != null) EnableSendButtonFlag = true; } }
+        public bool EnableSendButtonFlag { get => _EnableSendButtonFlag; set => Set(ref _EnableSendButtonFlag, value); }
         public string UserName { get; }
         public Client Client { get; }
         public ObservableCollection<string> ConnectionList { get; } = new ObservableCollection<string>();
         public ObservableCollection<TextMessage> Messages { get; } = new ObservableCollection<TextMessage>();
-
-        private string _message;
-        public string Message { get => _message; set => Set(ref _message, value); }
 
         public ChatWindowDataContext(string userName)
         {
@@ -59,6 +60,11 @@ namespace WPFClient
                 Messages.Add((TextMessage)tm);
             };
 
+            Client.ServerStopNotificationMessageReceived += (_, ssn) =>
+            {
+
+            };
+
             var rclm = new RequestConnectionListMessage(Encoding.UTF8.GetBytes(Client.Name));
             await Client.SendAsync(rclm);
 
@@ -68,6 +74,7 @@ namespace WPFClient
             Messages.Add(new TextMessage(Message, "You"));
             await Client.SendAsync(new TextMessage(Message, UserName));
             Message = null;
+            EnableSendButtonFlag = false;
         }
     }
 
