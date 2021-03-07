@@ -19,6 +19,7 @@ namespace ChatProtocol
             ConnectionList,
             RequestConnectionList,
             ServerStopNotification,
+            SuccessfulAuthorizationNotification,
         }
 
         public Communicator(Protocol protocol)
