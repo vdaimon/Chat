@@ -15,7 +15,7 @@ namespace WPFClient
 
         protected void Set<T>(ref T property, T value, Action callback = null, [CallerMemberName] string propName = "")
         {
-            if ((property == null && value != null) || !property.Equals(value))
+            if ((property == null && value != null) || (property != null && !property.Equals(value)))
             {
                 property = value;
 

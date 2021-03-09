@@ -35,6 +35,7 @@
                 </Grid.RowDefinitions>
                 <TextBox Grid.Row="0" Text="Connected clients:" Margin="2" Padding="5"/>
                 <ListBox Grid.Row="1" ItemsSource="{Binding ConnectionList}"
+                         SelectedItem="{Binding Receiver}"
                          Margin="2"/>
             </Grid>
 

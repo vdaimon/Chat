@@ -14,8 +14,8 @@ namespace ChatClient
 
         static async Task MainAsync(string[] args)
         {
-            Console.WriteLine("Enter your username");
-            Client client = new Client(IPAddress.Loopback, 8005, Console.ReadLine());
+
+            Client client = new Client(IPAddress.Loopback, 8005);
 
             client.TextMessageReceived += (_, msg) => 
             {
@@ -42,11 +42,27 @@ namespace ChatClient
             client.ServerStopNotificationMessageReceived += (_, msg) =>
             {
                 Console.WriteLine("Server stopped");
-                client.Disconnect().Wait();
+                client.DisconnectAsync().Wait();
+            };
+            client.SuccessfulAuthorizationNotificationMessageReceived += (_, msg) =>
+            {
+                Console.WriteLine(msg);
+            };
+            client.ClientToClientMessageReceived += (_, msg) =>
+            {
+                var res = (ClientToClientTextMessage)msg;
+                Console.WriteLine($"Personally from {res.SenderName}: {res.Text}");
             };
 
-            await client.ConnectAsync();
-            client.Listen();
+            bool connected = false;
+            do
+            {
+                Console.WriteLine("Enter your username");
+                string name = Console.ReadLine();
+                connected = await client.ConnectAsync(name);
+                if (!connected)
+                    Console.WriteLine("The name is already in use");
+            } while (!connected);
 
             Console.WriteLine("connected to server");
 
@@ -54,13 +70,22 @@ namespace ChatClient
             {
                 string msg = Console.ReadLine();
                 if (msg == "clm")
-                    await client.SendAsync(new RequestConnectionListMessage(client.Name));
+                    await client.SendRequestConnectionListAsync();
                 else if (msg == "end")
                     break;
-                else await client.SendAsync(new TextMessage(msg, client.Name));
+                else if (msg == "pers")
+                {
+                    Console.WriteLine("Enter receiver name");
+                    string name = Console.ReadLine();
+                    Console.WriteLine("Enter your message");
+                    string message = Console.ReadLine();
+                    await client.SendPersonallyMessage(name, message);
+                }
+                    
+                else await client.SendTextMessageAsync(msg);
             }
 
-            await client.Disconnect();
+            await client.DisconnectAsync();
         }
 
         static void Main(string[] args)

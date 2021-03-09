@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using ChatProtocol;
+using System.Linq;
 
 namespace ChatServer
 {
@@ -40,6 +41,21 @@ namespace ChatServer
                         string name = am.UserName;
                         if (name == null)
                             return;
+
+                        int similarNames = 0;
+                        lock (_lock)
+                        {
+                            similarNames = _connections.Count((x) => x.ClientName == name);
+ 
+                        }
+                        if (similarNames!=0)
+                        {
+                            await client.ClientCommunicator.SendAsync(new SuccessfulAuthorizationNotificationMessage(false, "The name is already in use"));
+                            return;
+                        }
+
+                        await client.ClientCommunicator.SendAsync(new SuccessfulAuthorizationNotificationMessage(true));
+
                         client.ClientName = name;
                         lock (_lock)
                         {
@@ -90,6 +106,18 @@ namespace ChatServer
                         if (name == null)
                             return;
                         await SendToEveryone(client, dm);
+                        break;
+                    }
+                case ClientToClientTextMessage ctcm:
+                    {
+                        ClientAttributes receiver;
+                        lock (_lock)
+                        {
+                            receiver = _connections.First((x) => x.ClientName == ctcm.ReceiverName);
+
+                        }
+                        await receiver.ClientCommunicator.SendAsync(ctcm);
+                        Console.WriteLine($"from {ctcm.SenderName} to {ctcm.ReceiverName}: {ctcm.Text}");
                         break;
                     }
             }

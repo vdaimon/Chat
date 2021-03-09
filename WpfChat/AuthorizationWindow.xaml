@@ -1,4 +1,4 @@
-﻿<Window x:Class="WPFClient.MainWindow"
+﻿<Window x:Class="WPFClient.AuthorizationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,9 +9,10 @@
     <Grid>
         <StackPanel Margin="2" >
             <TextBlock Margin="2" Padding="5"
-                       Text="Enter your username"
+                       Text="{Binding Text}"
                        HorizontalAlignment="Center"/>
-            <TextBox x:Name="Username" Margin="2" Padding="5"/>
+            <TextBox Margin="2" Padding="5"
+                     Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
             <Button  Margin="2" Padding="5"
                      Content="Connect"
                      Click="ConnectButton_Click"

@@ -47,6 +47,19 @@ namespace ChatProtocol
             stream.WriteInt32(buffer.Length);            
             stream.Write(buffer, 0, buffer.Length);
         }
+        public static bool ReadBool(this Stream stream)
+        {
+            var buffer = new byte[1];
+            var len = stream.Read(buffer, 0, buffer.Length);
+            if (len!=buffer.Length)
+                throw new ArgumentException("Stream doesn't contain enough bytes to read bool", nameof(stream));
+            return buffer[0] != 0;
+        }
+        public static void WriteBool(this Stream stream, bool value)
+        {
+            var buffer = new byte[] { value ? (byte)1 : (byte)0 };
+            stream.Write(buffer, 0, buffer.Length);
+        }
     }
 
 }

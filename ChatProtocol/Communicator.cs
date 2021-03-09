@@ -20,6 +20,7 @@ namespace ChatProtocol
             RequestConnectionList,
             ServerStopNotification,
             SuccessfulAuthorizationNotification,
+            ClientToClientText,
         }
 
         public Communicator(Protocol protocol)
@@ -58,6 +59,12 @@ namespace ChatProtocol
                 case MessageType.ServerStopNotification:
                     return new ServerStopNotificationMessage(message);
 
+                case MessageType.SuccessfulAuthorizationNotification:
+                    return new SuccessfulAuthorizationNotificationMessage(message);
+
+                case MessageType.ClientToClientText:
+                    return new ClientToClientTextMessage(message);
+
                 default:
                     throw new CommunicatorException();
 
@@ -68,8 +75,7 @@ namespace ChatProtocol
         {
             if (!Enum.IsDefined(typeof(MessageType), message.MessageType))
                 throw new CommunicatorException();
-            await _protocol.SendAsync(new byte[] { (byte)message.MessageType }.Concat(message.GetBytes()).ToArray());
+                await _protocol.SendAsync(new byte[] { (byte)message.MessageType }.Concat(message.GetBytes()).ToArray());
         }
-
     }
 }
