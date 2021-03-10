@@ -15,10 +15,16 @@ namespace ChatProtocolTests
     public class CommunicatorTests
     {
 
-         private byte[] Serializer (IGetBytes message)
+        private byte[] Serializer(IGetBytes message)
         {
-            var data = new byte[] { (byte)message.MessageType}
-                .Concat(message.GetBytes()).ToArray();
+
+            MemoryStream packet = new MemoryStream();
+            using (packet)
+            {
+                packet.WriteByte((byte)message.MessageType);
+                message.GetBytes(packet);
+            }
+            var data = packet.ToArray();
             var dataLen = BitConverter.GetBytes(data.Length);
             var buffer = new byte[] { };
             return buffer.Concat(Encoding.UTF8.GetBytes("BEGIN"))
@@ -153,9 +159,9 @@ namespace ChatProtocolTests
         {
             public MessageType MessageType => (MessageType)0x58;
 
-            public byte[] GetBytes()
+            public void GetBytes(MemoryStream stream)
             {
-                return Encoding.UTF8.GetBytes("Dmk");
+                stream.WriteString("Dmk");
             }
         }
 

@@ -14,13 +14,10 @@ namespace ChatProtocol
         MessageType IGetBytes.MessageType => MessageType.Text;
         public string UserName { get; }
 
-        public TextMessage(byte[] message)
+        public TextMessage(MemoryStream packet)
         {
-            using(var stream = new MemoryStream(message))
-            {
-                UserName = stream.ReadString();
-                Text = stream.ReadString();
-            }
+            UserName = packet.ReadString();
+            Text = packet.ReadString();
         }
 
         public TextMessage(string message, string userName)
@@ -29,14 +26,10 @@ namespace ChatProtocol
             UserName = userName;
         }
 
-        byte[] IGetBytes.GetBytes()
+        public void GetBytes(MemoryStream stream)
         {
-            using (var stream = new MemoryStream())
-            {
-                stream.WriteString(UserName);
-                stream.WriteString(Text);
-                return stream.ToArray();
-            }
+            stream.WriteString(UserName);
+            stream.WriteString(Text);
         }
     }
 }

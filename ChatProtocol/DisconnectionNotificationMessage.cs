@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,8 +11,8 @@ namespace ChatProtocol
     {
         public override Communicator.MessageType MessageType => Communicator.MessageType.DisconnectionNotification;
 
-        public DisconnectionNotificationMessage(byte[] userName)
-            :base(userName)
+        public DisconnectionNotificationMessage(MemoryStream packet)
+            :base(packet)
         {
 
         }

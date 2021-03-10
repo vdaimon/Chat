@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,14 +11,14 @@ namespace ChatProtocol
     {
         public Communicator.MessageType MessageType => Communicator.MessageType.ServerStopNotification;
 
-        public ServerStopNotificationMessage(byte[] data = null)
+        public ServerStopNotificationMessage(MemoryStream packet = null)
         {
 
         }
 
-        public byte[] GetBytes()
+        public void GetBytes(MemoryStream stream)
         {
-            return new byte[] { };
+            return;
         }
     }
 }

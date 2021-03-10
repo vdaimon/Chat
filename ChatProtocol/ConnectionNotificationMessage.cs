@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,8 +12,8 @@ namespace ChatProtocol
     {
         public override MessageType MessageType => MessageType.ConnectionNotification;
 
-        public ConnectionNotificationMessage(byte[] userName)
-            :base(userName)
+        public ConnectionNotificationMessage(MemoryStream packet)
+            :base(packet)
         {
 
         }

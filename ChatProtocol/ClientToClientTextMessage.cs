@@ -21,24 +21,17 @@ namespace ChatProtocol
             Text = message;
         }
 
-        public ClientToClientTextMessage(byte[] packet)
+        public ClientToClientTextMessage(MemoryStream packet)
         {
-            using (MemoryStream stream = new MemoryStream(packet))
-            {
-                SenderName = stream.ReadString();
-                ReceiverName = stream.ReadString();
-                Text = stream.ReadString();
-            }
+                SenderName = packet.ReadString();
+                ReceiverName = packet.ReadString();
+                Text = packet.ReadString();
         }
-        public byte[] GetBytes()
+        public void GetBytes(MemoryStream stream)
         {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                stream.WriteString(SenderName);
-                stream.WriteString(ReceiverName);
-                stream.WriteString(Text);
-                return stream.ToArray();
-            }
+            stream.WriteString(SenderName);
+            stream.WriteString(ReceiverName);
+            stream.WriteString(Text);
         }
     }
 }

@@ -13,21 +13,16 @@ namespace ChatProtocol
 
         public Communicator.MessageType MessageType => Communicator.MessageType.ConnectionList;
 
-        public ConnectionListMessage(byte[] message)
+        public ConnectionListMessage(MemoryStream packet)
         {
-
-            using (Stream stream = new MemoryStream(message))
-            {
-                int listLenght = stream.ReadInt32();
+                int listLenght = packet.ReadInt32();
 
                 UserNames = new List<string>();
 
                 for (;listLenght>0;listLenght--)
                 {
-                   UserNames.Add(stream.ReadString());
+                   UserNames.Add(packet.ReadString());
                 }
-
-            }
         }
 
         public ConnectionListMessage(List<string> userNames)
@@ -36,20 +31,14 @@ namespace ChatProtocol
         }
 
 
-        public byte[] GetBytes()
+        public void GetBytes(MemoryStream stream)
         {
-            using (MemoryStream stream = new MemoryStream ())
-            {
                 stream.WriteInt32(UserNames.Count);
 
                 foreach(var el in UserNames)
                 {
                     stream.WriteString(el);
                 }
-
-                return stream.ToArray();   
-            }
-
         }
     }
 

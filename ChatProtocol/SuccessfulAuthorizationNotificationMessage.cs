@@ -13,27 +13,20 @@ namespace ChatProtocol
         public string Message { get; }
         public Communicator.MessageType MessageType => Communicator.MessageType.SuccessfulAuthorizationNotification;
 
-        public SuccessfulAuthorizationNotificationMessage(byte[] statusAndMessage)
+        public SuccessfulAuthorizationNotificationMessage(MemoryStream packet)
         {
-            using (MemoryStream stream = new MemoryStream(statusAndMessage))
-            {
-                IsSuccessful = stream.ReadBool();
-                Message = stream.ReadString();
-            }
+                IsSuccessful = packet.ReadBool();
+                Message = packet.ReadString();
         }
         public SuccessfulAuthorizationNotificationMessage(bool status, string message="")
         {
             IsSuccessful = status;
             Message = message;
         }
-        public byte[] GetBytes()
+        public void GetBytes(MemoryStream stream)
         {
-            using (MemoryStream stream = new MemoryStream())
-            {
                 stream.WriteBool(IsSuccessful);
                 stream.WriteString(Message);
-                return stream.ToArray();
-            }
         }
     }
 }

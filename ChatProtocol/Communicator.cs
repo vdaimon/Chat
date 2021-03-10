@@ -32,42 +32,45 @@ namespace ChatProtocol
         {
             var data = await _protocol.ReceiveAsync();
 
-            MessageType msgType = (MessageType)data[0];
 
-            var message = data.Skip(1).ToArray();
-
-            switch(msgType)
+            using (MemoryStream packet = new MemoryStream(data))
             {
-                case MessageType.Autorization:
-                    return new AuthorizationMessage(message);
 
-                case MessageType.Text:
-                    return new TextMessage(message);
+                var msgType = (MessageType)packet.ReadByte();
 
-                case MessageType.ConnectionNotification:
-                    return new ConnectionNotificationMessage(message);
+                switch (msgType)
+                {
+                    case MessageType.Autorization:
+                        return new AuthorizationMessage(packet);
 
-                case MessageType.DisconnectionNotification:
-                    return new DisconnectionNotificationMessage(message);
+                    case MessageType.Text:
+                        return new TextMessage(packet);
 
-                case MessageType.ConnectionList:
-                    return new ConnectionListMessage(message);
+                    case MessageType.ConnectionNotification:
+                        return new ConnectionNotificationMessage(packet);
 
-                case MessageType.RequestConnectionList:
-                    return new RequestConnectionListMessage(message);
+                    case MessageType.DisconnectionNotification:
+                        return new DisconnectionNotificationMessage(packet);
 
-                case MessageType.ServerStopNotification:
-                    return new ServerStopNotificationMessage(message);
+                    case MessageType.ConnectionList:
+                        return new ConnectionListMessage(packet);
 
-                case MessageType.SuccessfulAuthorizationNotification:
-                    return new SuccessfulAuthorizationNotificationMessage(message);
+                    case MessageType.RequestConnectionList:
+                        return new RequestConnectionListMessage(packet);
 
-                case MessageType.ClientToClientText:
-                    return new ClientToClientTextMessage(message);
+                    case MessageType.ServerStopNotification:
+                        return new ServerStopNotificationMessage(packet);
 
-                default:
-                    throw new CommunicatorException();
+                    case MessageType.SuccessfulAuthorizationNotification:
+                        return new SuccessfulAuthorizationNotificationMessage(packet);
 
+                    case MessageType.ClientToClientText:
+                        return new ClientToClientTextMessage(packet);
+
+                    default:
+                        throw new CommunicatorException();
+
+                }
             }
         }
 
@@ -75,7 +78,12 @@ namespace ChatProtocol
         {
             if (!Enum.IsDefined(typeof(MessageType), message.MessageType))
                 throw new CommunicatorException();
-                await _protocol.SendAsync(new byte[] { (byte)message.MessageType }.Concat(message.GetBytes()).ToArray());
+            using (MemoryStream stream = new MemoryStream()) 
+            {
+                stream.WriteByte((byte)message.MessageType);
+                message.GetBytes(stream);
+                await _protocol.SendAsync(stream.ToArray());
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +11,6 @@ namespace ChatProtocol
     public interface IGetBytes
     {
         MessageType MessageType { get; }
-        byte[] GetBytes();
+        void GetBytes(MemoryStream stream);
     }
 }

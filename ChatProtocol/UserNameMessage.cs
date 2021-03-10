@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,9 +13,9 @@ namespace ChatProtocol
 
         public virtual Communicator.MessageType MessageType => throw new NotImplementedException();
 
-        protected UserNameMessage(byte[] message)
+        protected UserNameMessage(MemoryStream packet)
         {
-            UserName = Encoding.UTF8.GetString(message);
+            UserName = packet.ReadString();
         }
 
         protected UserNameMessage(string userName)
@@ -22,9 +23,9 @@ namespace ChatProtocol
             UserName = userName;
         }
 
-        public byte[] GetBytes()
+        public void GetBytes(MemoryStream stream)
         {
-            return Encoding.UTF8.GetBytes(UserName);
+            stream.WriteString(UserName);
         }
     }
 }
