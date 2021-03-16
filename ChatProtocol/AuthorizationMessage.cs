@@ -9,16 +9,15 @@ namespace ChatProtocol
 {
     public class AuthorizationMessage : UserNameMessage
     {
-        public override Communicator.MessageType MessageType => Communicator.MessageType.Autorization;
 
-        public AuthorizationMessage(MemoryStream packet)
-            : base(packet)
+        public AuthorizationMessage(Stream stream)
+            : base(stream, Communicator.MessageType.Autorization)
         {
             
         }
 
-        public AuthorizationMessage(string userName)
-            : base(userName)
+        public AuthorizationMessage(string userName, Guid transactionId)
+            : base(userName, transactionId, Communicator.MessageType.Autorization)
         {
 
         }

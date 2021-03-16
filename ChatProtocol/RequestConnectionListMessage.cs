@@ -9,15 +9,13 @@ namespace ChatProtocol
 {
     public class RequestConnectionListMessage : UserNameMessage
     {
-        public override Communicator.MessageType MessageType => Communicator.MessageType.RequestConnectionList;
-
-        public RequestConnectionListMessage(MemoryStream packet)
-            :base(packet)
+        public RequestConnectionListMessage(Stream stream)
+            :base(stream, Communicator.MessageType.RequestConnectionList)
         {
 
         }
-        public RequestConnectionListMessage(string userName)
-            : base(userName)
+        public RequestConnectionListMessage(string userName, Guid transactionId)
+            : base(userName, transactionId, Communicator.MessageType.RequestConnectionList)
         {
 
         }

@@ -7,38 +7,39 @@ using System.Threading.Tasks;
 
 namespace ChatProtocol
 {
-    public class ConnectionListMessage : IGetBytes
+    public class ConnectionListMessage : MessageBase
     {
         public List<string> UserNames { get; }
 
-        public Communicator.MessageType MessageType => Communicator.MessageType.ConnectionList;
-
-        public ConnectionListMessage(MemoryStream packet)
+        public ConnectionListMessage(Stream stream)
+            : base(stream, Communicator.MessageType.ConnectionList)
         {
-                int listLenght = packet.ReadInt32();
+                int listLenght = stream.ReadInt32();
 
                 UserNames = new List<string>();
 
                 for (;listLenght>0;listLenght--)
                 {
-                   UserNames.Add(packet.ReadString());
+                   UserNames.Add(stream.ReadString());
                 }
         }
 
-        public ConnectionListMessage(List<string> userNames)
+        public ConnectionListMessage(List<string> userNames, Guid transactionId)
+            : base(Communicator.MessageType.ConnectionList, transactionId)
         {
             UserNames = userNames;
         }
 
 
-        public void GetBytes(MemoryStream stream)
+        public override void ToStream(Stream stream)
         {
-                stream.WriteInt32(UserNames.Count);
+            base.ToStream(stream);
+            stream.WriteInt32(UserNames.Count);
 
-                foreach(var el in UserNames)
-                {
-                    stream.WriteString(el);
-                }
+            foreach(var el in UserNames)
+            {
+                stream.WriteString(el);
+            }
         }
     }
 

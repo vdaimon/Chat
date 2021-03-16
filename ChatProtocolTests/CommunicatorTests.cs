@@ -22,7 +22,7 @@ namespace ChatProtocolTests
             using (packet)
             {
                 packet.WriteByte((byte)message.MessageType);
-                message.GetBytes(packet);
+                message.ToStream(packet);
             }
             var data = packet.ToArray();
             var dataLen = BitConverter.GetBytes(data.Length);
@@ -50,7 +50,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task ReceiveAsyncAuthorization()
         {
-            var data = new AuthorizationMessage("Dmk");
+            var data = new AuthorizationMessage("Dmk", Guid.NewGuid());
             var res = await ReceiveAsyncObject<AuthorizationMessage>(data);
             Assert.AreEqual(data.UserName, res.UserName);
         }
@@ -58,7 +58,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task ReceiveAsyncText()
         {
-            var data = new TextMessage("Hello, world!","Dmk");
+            var data = new TextMessage("Hello, world!","Dmk", Guid.NewGuid());
             var res = await ReceiveAsyncObject<TextMessage>(data);
             Assert.AreEqual(data.Text, res.Text);
         }
@@ -66,7 +66,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task ReceiveAsyncConnectionNotification()
         {
-            var data = new ConnectionNotificationMessage ("Dmk");
+            var data = new ConnectionNotificationMessage ("Dmk", Guid.NewGuid());
             var res = await ReceiveAsyncObject<ConnectionNotificationMessage>(data);
             Assert.AreEqual(data.UserName, res.UserName);
         }
@@ -74,7 +74,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task ReceiveAsyncDisconnectionNotification()
         {
-            var data = new DisconnectionNotificationMessage("Dmk");
+            var data = new DisconnectionNotificationMessage("Dmk", Guid.NewGuid());
             var res = await ReceiveAsyncObject<DisconnectionNotificationMessage>(data);
             Assert.AreEqual(data.UserName, res.UserName);
         }
@@ -83,7 +83,7 @@ namespace ChatProtocolTests
         public async Task ReceiveAsyncConnectionList()
         {
 
-            var data = new ConnectionListMessage(new List<string>{"Say", "Dmk"});
+            var data = new ConnectionListMessage(new List<string>{"Say", "Dmk"}, Guid.NewGuid());
             var res = await ReceiveAsyncObject<ConnectionListMessage>(data);
             CollectionAssert.AreEqual(data.UserNames, res.UserNames);
         }
@@ -91,7 +91,7 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task ReceiveAsyncRequestConnectionList()
         {
-            var data = new RequestConnectionListMessage("Dmk");
+            var data = new RequestConnectionListMessage("Dmk", Guid.NewGuid());
             var res = await ReceiveAsyncObject<RequestConnectionListMessage>(data);
             Assert.AreEqual(data.UserName, res.UserName);
         }
@@ -116,37 +116,37 @@ namespace ChatProtocolTests
         [TestMethod]
         public async Task SendAsyncAuthorization()
         {
-            await SendAsyncObject(new AuthorizationMessage("Dmk"));
+            await SendAsyncObject(new AuthorizationMessage("Dmk", Guid.NewGuid()));
         }
 
         [TestMethod]
         public async Task SendAsyncText()
         {
-            await SendAsyncObject(new TextMessage("Hello, world!", "Dmk"));
+            await SendAsyncObject(new TextMessage("Hello, world!", "Dmk", Guid.NewGuid()));
         }
 
         [TestMethod]
         public async Task SendAsyncConnectionNotification()
         {
-            await SendAsyncObject(new ConnectionNotificationMessage("Dmk"));
+            await SendAsyncObject(new ConnectionNotificationMessage("Dmk", Guid.NewGuid()));
         }
 
         [TestMethod]
         public async Task SendAsyncDisconnectionNotification()
         {
-            await SendAsyncObject(new DisconnectionNotificationMessage("Dmk"));
+            await SendAsyncObject(new DisconnectionNotificationMessage("Dmk", Guid.NewGuid()));
         }
 
         [TestMethod]
         public async Task SendAsyncConnectionList()
         {
-            await SendAsyncObject(new ConnectionListMessage(new List<string> { "Say", "Dmk" }));
+            await SendAsyncObject(new ConnectionListMessage(new List<string> { "Say", "Dmk" }, Guid.NewGuid()));
         }
 
         [TestMethod]
         public async Task SendAsyncRequestConnectionList()
         {
-            await SendAsyncObject(new RequestConnectionListMessage("Dmk"));
+            await SendAsyncObject(new RequestConnectionListMessage("Dmk", Guid.NewGuid()));
         }
 
         [TestMethod]
@@ -159,7 +159,7 @@ namespace ChatProtocolTests
         {
             public MessageType MessageType => (MessageType)0x58;
 
-            public void GetBytes(MemoryStream stream)
+            public void ToStream(Stream stream)
             {
                 stream.WriteString("Dmk");
             }

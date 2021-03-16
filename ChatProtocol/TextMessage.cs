@@ -4,30 +4,32 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static ChatProtocol.Communicator;
+
 
 namespace ChatProtocol
 {
-    public class TextMessage : IGetBytes
+    public class TextMessage : MessageBase
     {
         public string Text { get; }
-        MessageType IGetBytes.MessageType => MessageType.Text;
         public string UserName { get; }
 
-        public TextMessage(MemoryStream packet)
+        public TextMessage(Stream stream)
+            : base(stream, Communicator.MessageType.Text)
         {
-            UserName = packet.ReadString();
-            Text = packet.ReadString();
+            UserName = stream.ReadString();
+            Text = stream.ReadString();
         }
 
-        public TextMessage(string message, string userName)
+        public TextMessage(string message, string userName, Guid transactionId)
+            : base(Communicator.MessageType.Text, transactionId)
         {
             Text = message;
             UserName = userName;
         }
 
-        public void GetBytes(MemoryStream stream)
+        public override void ToStream(Stream stream)
         {
+            base.ToStream(stream);
             stream.WriteString(UserName);
             stream.WriteString(Text);
         }

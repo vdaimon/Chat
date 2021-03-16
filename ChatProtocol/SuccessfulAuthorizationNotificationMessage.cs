@@ -7,26 +7,28 @@ using System.Threading.Tasks;
 
 namespace ChatProtocol
 {
-    public class SuccessfulAuthorizationNotificationMessage : IGetBytes
+    public class SuccessfulAuthorizationNotificationMessage : MessageBase
     {
         public bool IsSuccessful { get; }
         public string Message { get; }
-        public Communicator.MessageType MessageType => Communicator.MessageType.SuccessfulAuthorizationNotification;
 
-        public SuccessfulAuthorizationNotificationMessage(MemoryStream packet)
+        public SuccessfulAuthorizationNotificationMessage(Stream stream)
+            : base(stream, Communicator.MessageType.SuccessfulAuthorizationNotification)
         {
-                IsSuccessful = packet.ReadBool();
-                Message = packet.ReadString();
+                IsSuccessful = stream.ReadBool();
+                Message = stream.ReadString();
         }
-        public SuccessfulAuthorizationNotificationMessage(bool status, string message="")
+        public SuccessfulAuthorizationNotificationMessage(bool status, Guid transactionId, string message="")
+            : base (Communicator.MessageType.SuccessfulAuthorizationNotification, transactionId)
         {
             IsSuccessful = status;
             Message = message;
         }
-        public void GetBytes(MemoryStream stream)
+        public override void ToStream(Stream stream)
         {
-                stream.WriteBool(IsSuccessful);
-                stream.WriteString(Message);
+            base.ToStream(stream);
+            stream.WriteBool(IsSuccessful);
+            stream.WriteString(Message);
         }
     }
 }

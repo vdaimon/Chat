@@ -7,18 +7,23 @@ using System.Threading.Tasks;
 
 namespace ChatProtocol
 {
-    public class ServerStopNotificationMessage : IGetBytes
+    public class ServerStopNotificationMessage : MessageBase
     {
-        public Communicator.MessageType MessageType => Communicator.MessageType.ServerStopNotification;
+ 
+        public ServerStopNotificationMessage(Stream stream)
+            : base(stream, Communicator.MessageType.ServerStopNotification)
+        {
 
-        public ServerStopNotificationMessage(MemoryStream packet = null)
+        }
+        public ServerStopNotificationMessage()
+            : base (Communicator.MessageType.ServerStopNotification, Guid.Empty)
         {
 
         }
 
-        public void GetBytes(MemoryStream stream)
+        public override void ToStream(Stream stream)
         {
-            return;
+            base.ToStream(stream);
         }
     }
 }

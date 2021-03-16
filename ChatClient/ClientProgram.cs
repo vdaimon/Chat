@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using ChatProtocol;
+using static ChatProtocol.ServerExceptionMessage;
+using System.Threading;
 
 namespace ChatClient
 {
@@ -14,7 +16,6 @@ namespace ChatClient
 
         static async Task MainAsync(string[] args)
         {
-
             Client client = new Client(IPAddress.Loopback, 8005);
 
             client.TextMessageReceived += (_, msg) => 
@@ -32,57 +33,58 @@ namespace ChatClient
                 var res = (DisconnectionNotificationMessage)msg;
                 Console.WriteLine(res.UserName + " disconnected");
             };
-            client.ConnectionListMessageReceived += (_, msg) => 
-            {
-                var res = (ConnectionListMessage)msg;
-                Console.WriteLine("Connection clients");
-                foreach (var el in res.UserNames)
-                    Console.WriteLine(el);
-            };
             client.ServerStopNotificationMessageReceived += (_, msg) =>
             {
                 Console.WriteLine("Server stopped");
                 client.DisconnectAsync().Wait();
             };
-            client.SuccessfulAuthorizationNotificationMessageReceived += (_, msg) =>
+            client.PersonalMessageReceived += (_, msg) =>
             {
-                Console.WriteLine(msg);
-            };
-            client.ClientToClientMessageReceived += (_, msg) =>
-            {
-                var res = (ClientToClientTextMessage)msg;
+                var res = (PersonalMessage)msg;
                 Console.WriteLine($"Personally from {res.SenderName}: {res.Text}");
             };
 
-            bool connected = false;
+
+            string name;
             do
             {
                 Console.WriteLine("Enter your username");
-                string name = Console.ReadLine();
-                connected = await client.ConnectAsync(name);
-                if (!connected)
-                    Console.WriteLine("The name is already in use");
-            } while (!connected);
+                name = Console.ReadLine();
+            } while (!await client.ConnectAsync(name));
 
             Console.WriteLine("connected to server");
 
             while (true)
             {
                 string msg = Console.ReadLine();
-                if (msg == "clm")
-                    await client.SendRequestConnectionListAsync();
-                else if (msg == "end")
-                    break;
-                else if (msg == "pers")
+
+                try
                 {
-                    Console.WriteLine("Enter receiver name");
-                    string name = Console.ReadLine();
-                    Console.WriteLine("Enter your message");
-                    string message = Console.ReadLine();
-                    await client.SendPersonallyMessage(name, message);
+                    if (msg == "clm")
+                    {
+                        Console.WriteLine("Connected clients:");
+                        foreach (var un in await client.GetConnectionListAsync())
+                        {
+                            Console.WriteLine(un);
+                        };
+                    }
+                    else if (msg == "end")
+                        break;
+                    else if (msg == "pers")
+                    {
+                        Console.WriteLine("Enter receiver name");
+                        string recName = Console.ReadLine();
+                        Console.WriteLine("Enter your message");
+                        string message = Console.ReadLine();
+                        await client.SendPersonallyMessage(recName, message);
+                    }
+
+                    else await client.SendTextMessageAsync(msg);
+
+                } catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
                 }
-                    
-                else await client.SendTextMessageAsync(msg);
             }
 
             await client.DisconnectAsync();

@@ -11,6 +11,6 @@ namespace ChatProtocol
     public interface IGetBytes
     {
         MessageType MessageType { get; }
-        void GetBytes(MemoryStream stream);
+        void ToStream(Stream stream);
     }
 }

@@ -7,24 +7,25 @@ using System.Threading.Tasks;
 
 namespace ChatProtocol
 {
-    public class UserNameMessage : IGetBytes
+    public class UserNameMessage : MessageBase
     {
         public string UserName { get; }
 
-        public virtual Communicator.MessageType MessageType => throw new NotImplementedException();
-
-        protected UserNameMessage(MemoryStream packet)
+        protected UserNameMessage(Stream stream, Communicator.MessageType msgType)
+            : base(stream, msgType)
         {
-            UserName = packet.ReadString();
+            UserName = stream.ReadString();
         }
 
-        protected UserNameMessage(string userName)
+        protected UserNameMessage(string userName, Guid transactionId, Communicator.MessageType msgType)
+            : base(msgType, transactionId)
         {
             UserName = userName;
         }
 
-        public void GetBytes(MemoryStream stream)
+        public override void ToStream(Stream stream)
         {
+            base.ToStream(stream);
             stream.WriteString(UserName);
         }
     }

@@ -9,16 +9,14 @@ namespace ChatProtocol
 {
     public class DisconnectionNotificationMessage : UserNameMessage
     {
-        public override Communicator.MessageType MessageType => Communicator.MessageType.DisconnectionNotification;
-
-        public DisconnectionNotificationMessage(MemoryStream packet)
-            :base(packet)
+        public DisconnectionNotificationMessage(Stream stream)
+            :base(stream, Communicator.MessageType.DisconnectionNotification)
         {
 
         }
 
-        public DisconnectionNotificationMessage(string userName)
-            : base(userName)
+        public DisconnectionNotificationMessage(string userName, Guid transactionId)
+            : base(userName, transactionId, Communicator.MessageType.DisconnectionNotification)
         {
 
         }

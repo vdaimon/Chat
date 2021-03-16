@@ -5,18 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfChat"
         mc:Ignorable="d"
-        Title="MainWindow" Height="150" Width="250">
+        Title="MainWindow" Height="170" Width="250">
     <Grid>
         <StackPanel Margin="2" >
+            <StackPanel Orientation="Horizontal"
+                        Margin="2">
+                <Button Content="Settings"
+                        Margin="2" Padding="2"
+                        Click="SettingsButton_Click"/>
+            </StackPanel>
             <TextBlock Margin="2" Padding="5"
                        Text="{Binding Text}"
                        HorizontalAlignment="Center"/>
-            <TextBox Margin="2" Padding="5"
+            <TextBox Name="UserNameBox" Margin="2" Padding="5"
                      Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
             <Button  Margin="2" Padding="5"
                      Content="Connect"
                      Click="ConnectButton_Click"
-                     IsDefault="True"/>
+                     IsDefault="True"
+                     IsEnabled="{Binding EnableConnectButtonFlag, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
     </Grid>
 </Window>

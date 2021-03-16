@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using ChatProtocol;
 using System.Linq;
+using static ChatProtocol.ServerExceptionMessage;
+using static ChatProtocol.ServerResponse;
 
 namespace ChatServer
 {
@@ -50,11 +52,11 @@ namespace ChatServer
                         }
                         if (similarNames!=0)
                         {
-                            await client.ClientCommunicator.SendAsync(new SuccessfulAuthorizationNotificationMessage(false, "The name is already in use"));
+                            await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.NameAlreadyInUse, am.TransactionId));
                             return;
                         }
 
-                        await client.ClientCommunicator.SendAsync(new SuccessfulAuthorizationNotificationMessage(true));
+                        await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.AuthorizationSuccessfully, am.TransactionId));
 
                         client.ClientName = name;
                         lock (_lock)
@@ -64,7 +66,7 @@ namespace ChatServer
 
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + client.Socket.RemoteEndPoint + $": client {name} connected");
 
-                        await SendToEveryone(client, new ConnectionNotificationMessage(name));
+                        await SendToEveryone(client, new ConnectionNotificationMessage(name, Guid.NewGuid()));
                         break;
                     }
 
@@ -72,9 +74,13 @@ namespace ChatServer
                     {
                         string text = tm.Text;
                         if (text == null)
+                        {
+                            await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.RecipientNotFound, tm.TransactionId));
                             return;
+                        }
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + $": {client.ClientName}: {text}");
-                        await SendToEveryone(client, new TextMessage(text, client.ClientName));
+                        await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.MessageSendSuccessfully, tm.TransactionId));
+                        await SendToEveryone(client, new TextMessage(text, client.ClientName, Guid.NewGuid()));
                         break;
                     }
 
@@ -97,7 +103,7 @@ namespace ChatServer
                         {
                             connectionList.Add(el.ClientName);
                         }
-                        await client.ClientCommunicator.SendAsync(new ConnectionListMessage(connectionList));
+                        await client.ClientCommunicator.SendAsync(new ConnectionListMessage(connectionList, rcm.TransactionId));
                         break;
                     }
                 case DisconnectionNotificationMessage dm:
@@ -108,16 +114,22 @@ namespace ChatServer
                         await SendToEveryone(client, dm);
                         break;
                     }
-                case ClientToClientTextMessage ctcm:
+                case PersonalMessage pm:
                     {
                         ClientAttributes receiver;
                         lock (_lock)
                         {
-                            receiver = _connections.First((x) => x.ClientName == ctcm.ReceiverName);
-
+                            receiver = _connections.FirstOrDefault((x) => x.ClientName == pm.ReceiverName);
                         }
-                        await receiver.ClientCommunicator.SendAsync(ctcm);
-                        Console.WriteLine($"from {ctcm.SenderName} to {ctcm.ReceiverName}: {ctcm.Text}");
+                        if (receiver == null)
+                        {
+                            Console.WriteLine($"Failed to send personal message from {client.ClientName}");
+                            await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.RecipientNotFound, pm.TransactionId));
+                            break;
+                        }
+                        await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.MessageSendSuccessfully, pm.TransactionId));
+                        await receiver.ClientCommunicator.SendAsync(pm);
+                        Console.WriteLine($"from {pm.SenderName} to {pm.ReceiverName}: {pm.Text}");
                         break;
                     }
             }
@@ -163,7 +175,7 @@ namespace ChatServer
 
         static void Main(string[] args)
         {
-            var listener = new Listener(IPAddress.Parse("127.0.0.1"), 8005);
+            var listener = new Listener(IPAddress.Parse(args[0]), int.Parse(args[1]));
             listener.Start(HandleConnection);
 
             Console.ReadLine();

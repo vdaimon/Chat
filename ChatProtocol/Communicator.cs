@@ -20,7 +20,9 @@ namespace ChatProtocol
             RequestConnectionList,
             ServerStopNotification,
             SuccessfulAuthorizationNotification,
-            ClientToClientText,
+            Personal,
+            ServerException,
+            ServerResponse,
         }
 
         public Communicator(Protocol protocol)
@@ -28,7 +30,7 @@ namespace ChatProtocol
             _protocol = protocol;
         }
 
-        public async Task<object> ReceiveAsync()
+        public async Task<MessageBase> ReceiveAsync()
         {
             var data = await _protocol.ReceiveAsync();
 
@@ -64,8 +66,14 @@ namespace ChatProtocol
                     case MessageType.SuccessfulAuthorizationNotification:
                         return new SuccessfulAuthorizationNotificationMessage(packet);
 
-                    case MessageType.ClientToClientText:
-                        return new ClientToClientTextMessage(packet);
+                    case MessageType.Personal:
+                        return new PersonalMessage(packet);
+
+                    case MessageType.ServerException:
+                        return new ServerExceptionMessage(packet);
+
+                    case MessageType.ServerResponse:
+                        return new ServerResponse(packet);
 
                     default:
                         throw new CommunicatorException();
@@ -81,7 +89,7 @@ namespace ChatProtocol
             using (MemoryStream stream = new MemoryStream()) 
             {
                 stream.WriteByte((byte)message.MessageType);
-                message.GetBytes(stream);
+                message.ToStream(stream);
                 await _protocol.SendAsync(stream.ToArray());
             }
         }

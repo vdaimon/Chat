@@ -7,28 +7,30 @@ using System.Threading.Tasks;
 
 namespace ChatProtocol
 {
-    public class ClientToClientTextMessage : IGetBytes
+    public class PersonalMessage : MessageBase
     {
         public string ReceiverName { get; }
         public string SenderName { get; }
         public string Text { get; }
-        public Communicator.MessageType MessageType => Communicator.MessageType.ClientToClientText;
 
-        public ClientToClientTextMessage(string senderName, string receiverName, string message )
+        public PersonalMessage(string senderName, string receiverName, string message, Guid transactionId)
+            : base(Communicator.MessageType.Personal, transactionId)
         {
             ReceiverName = receiverName;
             SenderName = senderName;
             Text = message;
         }
 
-        public ClientToClientTextMessage(MemoryStream packet)
+        public PersonalMessage(Stream stream)
+            : base(stream, Communicator.MessageType.Personal)
         {
-                SenderName = packet.ReadString();
-                ReceiverName = packet.ReadString();
-                Text = packet.ReadString();
+                SenderName = stream.ReadString();
+                ReceiverName = stream.ReadString();
+                Text = stream.ReadString();
         }
-        public void GetBytes(MemoryStream stream)
+        public override void ToStream(Stream stream)
         {
+            base.ToStream(stream);
             stream.WriteString(SenderName);
             stream.WriteString(ReceiverName);
             stream.WriteString(Text);

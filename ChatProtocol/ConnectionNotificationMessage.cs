@@ -4,22 +4,21 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static ChatProtocol.Communicator;
+
 
 namespace ChatProtocol
 {
     public class ConnectionNotificationMessage : UserNameMessage
     {
-        public override MessageType MessageType => MessageType.ConnectionNotification;
 
-        public ConnectionNotificationMessage(MemoryStream packet)
-            :base(packet)
+        public ConnectionNotificationMessage(Stream stream)
+            :base(stream, Communicator.MessageType.ConnectionNotification)
         {
 
         }
 
-        public ConnectionNotificationMessage(string userName)
-            : base(userName)
+        public ConnectionNotificationMessage(string userName, Guid transactionId)
+            : base(userName, transactionId, Communicator.MessageType.ConnectionNotification)
         {
 
         }

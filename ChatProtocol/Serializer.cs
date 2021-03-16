@@ -60,6 +60,19 @@ namespace ChatProtocol
             var buffer = new byte[] { value ? (byte)1 : (byte)0 };
             stream.Write(buffer, 0, buffer.Length);
         }
+        public static void WriteGuid(this Stream stream, Guid value)
+        {
+            var buffer = value.ToByteArray();
+            stream.Write(buffer, 0, buffer.Length);
+        }
+        public static Guid ReadGuid(this Stream stream)
+        {
+            var buffer = Guid.Empty.ToByteArray();
+            var len = stream.Read(buffer, 0, buffer.Length);
+            if (len != buffer.Length)
+                throw new ArgumentException("Stream doesn't contain enough bytes to read Guid", nameof(stream));
+            return new Guid(buffer);
+        }
     }
 
 }

@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfChat"
         mc:Ignorable="d"
-        Title="AuthorizationWindow" Height="400" Width="600">
+        Title="AuthorizationWindow" Height="400" Width="600"
+        KeyDown="Window_KeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,7 +16,6 @@
         <!--Main button panel-->
         <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal">
-                <Button Content="Disconnect" Margin="2" Padding="5"/>
                 <Button Content="Settings" Margin="2" Padding="5"/>
             </StackPanel>
         </Grid>
@@ -71,8 +71,21 @@
 
                 <!--Message sending window-->
                 <StackPanel Grid.Row="1">
-                    <TextBox Margin="2" Padding="5"
-                               Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Margin="2" Padding="5"
+                                   Text="to"/>
+                        <TextBlock Grid.Column="1"
+                                   Margin="2" Padding="5"
+                                   Text="{Binding Receiver, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBox Grid.Column="2" Name="MessageBox" Margin="2" Padding="5"
+                                 Text="{Binding Message, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Grid>
                     <Button Content="Send" Margin="2" Padding="5"
                             Click="SendButton_Click"
                             IsDefault="True"

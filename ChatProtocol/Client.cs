@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ChatProtocol
@@ -20,16 +21,13 @@ namespace ChatProtocol
         public event EventHandler<object> TextMessageReceived;
         public event EventHandler<object> ConnectionNotificationMessageReceived;
         public event EventHandler<object> DisconnectionNotificationMessageReceived;
-        public event EventHandler<object> ConnectionListMessageReceived;
         public event EventHandler<object> ServerStopNotificationMessageReceived;
-        public event EventHandler<object> SuccessfulAuthorizationNotificationMessageReceived;
-        public event EventHandler<object> ClientToClientMessageReceived;
+        public event EventHandler<object> PersonalMessageReceived;
 
         public Client (IPAddress addr, int port)
         {
             _endPoint = new IPEndPoint(addr, port);
         }
-
 
         public async Task<bool> ConnectAsync(string userName)
         {
@@ -39,17 +37,88 @@ namespace ChatProtocol
             {
                 await _client.ConnectAsync(_endPoint);
                 _communicator = new Communicator(new Protocol(new NetworkStream(_client)));
+                ListenAsync();
             };
 
-            await _communicator.SendAsync(new AuthorizationMessage(Name));
-            var data = await _communicator.ReceiveAsync();
-            var res = (SuccessfulAuthorizationNotificationMessage)data;
-            if (res.IsSuccessful)
-                ListenAsync();
-            return res.IsSuccessful;
+            var data = (ServerResponse) await Communicate(new AuthorizationMessage(Name, Guid.NewGuid()));
 
+            return data.Response == ServerResponse.ResponseType.AuthorizationSuccessfully;
         }
 
+        private readonly Dictionary<Guid, TaskCompletionSource<MessageBase>> _executingTasks = new Dictionary<Guid, TaskCompletionSource<MessageBase>>();
+
+        public async Task<object> Communicate(MessageBase data)
+        {
+            var tcs = new TaskCompletionSource<MessageBase>();
+
+            lock(_executingTasks)
+                _executingTasks.Add(data.TransactionId, tcs);
+
+            await _communicator.SendAsync(data);
+            return await tcs.Task;
+        }
+
+        private TaskCompletionSource<MessageBase> GetTaskCompletetionSourceById(Guid transactionId)
+        {
+            lock (_executingTasks)
+            {
+                if (!_executingTasks.ContainsKey(transactionId))
+                    return null;
+
+                var tcs = _executingTasks[transactionId];
+                _executingTasks.Remove(transactionId);
+
+                return tcs;
+            }
+        }
+
+        private void DataHandler(object state)
+        {
+            if (!(state is MessageBase data))
+                return;
+
+            var tcs = GetTaskCompletetionSourceById(data.TransactionId);
+
+            if (tcs != null)
+            {
+                tcs.SetResult(data);
+                return;
+            }
+
+            switch (data)
+            {
+                case TextMessage tm:
+                    {
+                        if (TextMessageReceived != null)
+                            TextMessageReceived(this, tm);
+                        break;
+                    }
+                case ConnectionNotificationMessage cm:
+                    {
+                        if (ConnectionNotificationMessageReceived != null)
+                            ConnectionNotificationMessageReceived(this, cm);
+                        break;
+                    }
+                case DisconnectionNotificationMessage dm:
+                    {
+                        if (DisconnectionNotificationMessageReceived != null)
+                            DisconnectionNotificationMessageReceived(this, dm);
+                        break;
+                    }
+                case ServerStopNotificationMessage ssm:
+                    {
+                        if (ServerStopNotificationMessageReceived != null)
+                            ServerStopNotificationMessageReceived(this, ssm);
+                        break;
+                    }
+                case PersonalMessage pm:
+                    {
+                        if (PersonalMessageReceived != null)
+                            PersonalMessageReceived(this, pm);
+                        break;
+                    }
+            }
+        }
 
         private async void ListenAsync()
         {
@@ -58,53 +127,8 @@ namespace ChatProtocol
                 while (_client.Connected)
                 {
                     var data = await _communicator.ReceiveAsync();
-                    switch (data)
-                    {
-                        case TextMessage tm:
-                            {
-                                if (TextMessageReceived != null)
-                                    TextMessageReceived(this, tm);
-                                break;
-                            }
-                        case ConnectionNotificationMessage cm:
-                            {
-                                if (ConnectionNotificationMessageReceived != null)
-                                    ConnectionNotificationMessageReceived(this, cm);
-                                break;
-                            }
-                        case DisconnectionNotificationMessage dm:
-                            {
-                                if (DisconnectionNotificationMessageReceived != null)
-                                    DisconnectionNotificationMessageReceived(this, dm);
-                                break;
-                            }
-                        case ConnectionListMessage clm:
-                            {
-                                if (ConnectionListMessageReceived != null)
-                                    ConnectionListMessageReceived(this, clm);
-                                break;
-                            }
-                        case ServerStopNotificationMessage ssm:
-                            {
-                                if (ServerStopNotificationMessageReceived != null)
-                                    ServerStopNotificationMessageReceived(this, ssm);
-                                break;
-                            }
-                        case SuccessfulAuthorizationNotificationMessage san:
-                            {
-                                if (SuccessfulAuthorizationNotificationMessageReceived != null)
-                                    SuccessfulAuthorizationNotificationMessageReceived(this, san);
-                                break;
-                            }
-                        case ClientToClientTextMessage ctc:
-                            {
-                                if (ClientToClientMessageReceived != null)
-                                    ClientToClientMessageReceived(this, ctc);
-                                break;
-                            }
-                    }
+                    ThreadPool.QueueUserWorkItem(DataHandler, data);
                 }
-           
             }
             catch (Exception)
             {
@@ -113,27 +137,47 @@ namespace ChatProtocol
 
         public async Task SendTextMessageAsync(string message)
         {
-            await SendAsync(new TextMessage(message, Name));
-        }
-        public async Task SendRequestConnectionListAsync()
-        {
-            await SendAsync(new RequestConnectionListMessage(Name));
+            var res = (ServerResponse)await Communicate(new TextMessage(message, Name, Guid.NewGuid()));
+
+            if (res.Response == ServerResponse.ResponseType.MessageSendSuccessfully)
+                return;
+
+            throw new Exception($"Unexpected result {res.Response}");
         }
 
-        private async Task SendAsync (IGetBytes message)
+        public async Task<List<string>> GetConnectionListAsync()
         {
-             await _communicator.SendAsync(message);
+            var res = await Communicate(new RequestConnectionListMessage(Name, Guid.NewGuid()));
+
+            if (res is ConnectionListMessage clm)
+                return clm.UserNames;
+
+            if (res is ServerResponse sr)
+                throw new Exception($"Unexpected result {sr.Response}");
+
+            throw new Exception($"Unexpected response type {res.GetType()}");
         }
 
         public async Task DisconnectAsync ()
         {
-            await SendAsync(new DisconnectionNotificationMessage(Name));
+            if (!_client.Connected)
+                return;
+            await _communicator.SendAsync(new DisconnectionNotificationMessage(Name, Guid.NewGuid()));
             _client.Shutdown(SocketShutdown.Both);
             _client.Close();
         }
+
         public async Task SendPersonallyMessage(string receiverName, string message)
         {
-            await SendAsync(new ClientToClientTextMessage(Name, receiverName, message));
+            var res = (ServerResponse)await Communicate(new PersonalMessage(Name, receiverName, message, Guid.NewGuid()));
+
+            if (res.Response == ServerResponse.ResponseType.MessageSendSuccessfully)
+                return;
+
+            if (res.Response == ServerResponse.ResponseType.RecipientNotFound)
+                throw new Exception("Recipient not found");
+
+            throw new Exception($"Unexpected result {res.Response}");
         }
     }
 }
