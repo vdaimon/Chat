@@ -18,15 +18,32 @@ namespace WPFClient
         private readonly Dispatcher _dispatcher;
         private bool _enableSendButtonFlag;
         private string _message;
-        private string _receiver;
+        private UserListElement _receiver;
         public string Message { get => _message; set { Set(ref _message, value, () => EnableSendButtonFlag = !string.IsNullOrEmpty(value)); } }
         public bool EnableSendButtonFlag { get => _enableSendButtonFlag; set => Set(ref _enableSendButtonFlag, value); }
         public string UserName { get; set; }
-        public string Receiver { get => _receiver; set { Set(ref _receiver, value, () => MessageList.Refresh()); SetConnectionListElementStatus(value, false); } }
+
+        public UserListElement Receiver
+        { 
+            get => _receiver;
+            set => Set(ref _receiver, value, () => OnRecevierChanged(value));
+        }
+
         public Client Client { get; set; }
         public ObservableCollection<UserListElement> ConnectionList { get; } = new ObservableCollection<UserListElement>();
-        public static ObservableCollection<MessageBase> Messages { get; } = new ObservableCollection<MessageBase>();
-        public ICollectionView MessageList { get;} = CollectionViewSource.GetDefaultView(Messages);
+        public ObservableCollection<MessageBase> Messages { get; } = new ObservableCollection<MessageBase>();
+
+        private ICollectionView _messageList;
+        public ICollectionView MessageList
+        {
+            get
+            {
+                if (_messageList == null)
+                    _messageList = CollectionViewSource.GetDefaultView(Messages);
+
+                return _messageList;
+            }
+        }
 
         public ChatWindowDataContext()
         {
@@ -36,16 +53,27 @@ namespace WPFClient
             MessageList.Filter = Filter;
         }
 
-        private void SetConnectionListElementStatus(string userName, bool value)
+        private void OnRecevierChanged(UserListElement user)
         {
-            var el = ConnectionList.SingleOrDefault((x) => x.UserName == userName);
-            if (el != null)
+            if (user != null)
             {
-                el.IsAnyNewMessage = value;
-                if (value)
-                    ConnectionList.Move(ConnectionList.IndexOf(el), 0);
+                user.IsAnyNewMessage = false;
             }
+            MessageList.Refresh();
         }
+
+        private UserListElement FindUserByName(string userName)
+        {
+            return ConnectionList.SingleOrDefault((x) => x.UserName == userName);
+        }
+
+        private void ChangeUserIfFound(string userName, Action<UserListElement> action)
+        {
+            var user = FindUserByName(userName);
+            if (user != null)
+                action(user);
+        }
+
         private bool Filter(object obj)
         {
             if (Receiver == null)
@@ -54,7 +82,7 @@ namespace WPFClient
             if (!(obj is PersonalMessage pm))
                 return false;
 
-            return (pm.ReceiverName == Receiver && pm.UserName == UserName) || (pm.UserName == Receiver && pm.ReceiverName == UserName);
+            return (pm.ReceiverName == Receiver?.UserName && pm.UserName == UserName) || (pm.UserName == Receiver?.UserName && pm.ReceiverName == UserName);
         }
 
         public async void StartClient(Window owner)
@@ -91,13 +119,19 @@ namespace WPFClient
             Client.ConnectionNotificationMessageReceived += (_, cnm) =>
             {
                 var msg = (ConnectionNotificationMessage)cnm;
-                _dispatcher.Invoke(() => ConnectionList.Add(new UserListElement(msg.UserName)));
+                _dispatcher.Invoke(() =>
+                {
+                    var el = FindUserByName(msg.UserName);
+                    if (el != null)
+                        el.IsConnected = true;
+                    else ConnectionList.Add(new UserListElement(msg.UserName));
+                });
             };
 
             Client.DisconnectionNotificationMessageReceived += (_, dnm) =>
             {
                 var msg = (DisconnectionNotificationMessage)dnm;
-                _dispatcher.Invoke(() => ConnectionList.Remove(ConnectionList.SingleOrDefault((x)=>x.UserName==msg.UserName)));
+                _dispatcher.Invoke(() => ChangeUserIfFound(msg.UserName, el => el.IsConnected = false));
             };
 
             Client.TextMessageReceived += (_, tm) =>
@@ -133,8 +167,14 @@ namespace WPFClient
             Messages.CollectionChanged += (s, e) =>
             {
                 var msg = Messages[Messages.Count - 1];
-                if (msg is PersonalMessage pm && pm.UserName != Receiver && pm.UserName != UserName)
-                    SetConnectionListElementStatus(pm.UserName, true);
+                if (msg is PersonalMessage pm && pm.UserName != Receiver?.UserName && pm.UserName != UserName)
+                {
+                    ChangeUserIfFound(pm.UserName, el =>
+                    {
+                        el.IsAnyNewMessage = true;
+                        ConnectionList.Move(ConnectionList.IndexOf(el), 0);
+                    });
+                }
             };
         }
 
@@ -147,8 +187,8 @@ namespace WPFClient
 
             if (Receiver != null)
             {
-                Messages.Add(new PersonalMessage(UserName, Receiver, Message, Guid.NewGuid()));
-                await Client.SendPersonallyMessage(Receiver, Message);
+                Messages.Add(new PersonalMessage(UserName, Receiver.UserName, Message, Guid.NewGuid()));
+                await Client.SendPersonallyMessage(Receiver.UserName, Message);
             }
             else
             {

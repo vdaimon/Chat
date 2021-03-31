@@ -19,6 +19,9 @@
                         <Setter Property="FontWeight" Value="Bold"/>
                         <Setter Property="TabIndex" Value="0"/>
                     </DataTrigger>
+                    <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                        <Setter Property="Foreground" Value="LightGray"/>
+                    </DataTrigger>
                 </Style.Triggers>
             </Style>
             
@@ -52,7 +55,7 @@
                 </Grid.RowDefinitions>
                 <TextBox Grid.Row="0" Text="Connected clients:" Margin="2" Padding="5" BorderThickness="0"/>
                 <ListBox Name="ClientList" Grid.Row="1" ItemsSource="{Binding ConnectionList}"
-                         SelectedItem="{Binding Receiver, Converter={StaticResource UserListElementConverter}}"
+                         SelectedItem="{Binding Receiver}"
                          Margin="2" ItemContainerStyle="{StaticResource ConnectionList}"/>
             </Grid>
 
@@ -116,14 +119,14 @@
                 </ScrollViewer>
 
                 <!--Message sending window-->
-                    <Grid Grid.Row="1">
+                <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        
+
                         <TextBlock Grid.Column="0"
                                    Margin="2,2,0,2" Padding="5,5,0,5"
                                    Text="to "/>
@@ -135,14 +138,16 @@
 
                         <TextBox Grid.Column="2" Name="MessageBox" Margin="2" Padding="5"
                                  TextWrapping="Wrap"
-                                 Text="{Binding Message, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                 Text="{Binding Message, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 IsEnabled="{Binding Receiver.IsConnected}"/>
 
                         <Button Grid.Column="3" Content="Send" Margin="2" Padding="5"
                             Click="SendButton_Click"
                             VerticalAlignment="Bottom"
                             IsDefault="True"
                             IsEnabled="{Binding EnableSendButtonFlag}"/>
-                    </Grid>
+
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

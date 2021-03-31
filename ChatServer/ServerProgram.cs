@@ -175,7 +175,7 @@ namespace ChatServer
 
         static void Main(string[] args)
         {
-            var listener = new Listener(IPAddress.Loopback, 8005);
+            var listener = new Listener(IPAddress.Parse("127.0.0.1"), 8005);
             listener.Start(HandleConnection);
 
             var cmd = Console.ReadLine();
