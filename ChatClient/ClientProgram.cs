@@ -41,7 +41,12 @@ namespace ChatClient
             client.PersonalMessageReceived += (_, msg) =>
             {
                 var res = (PersonalMessage)msg;
-                Console.WriteLine($"Personally from {res.SenderName}: {res.Text}");
+                Console.WriteLine($"Personally from {res.UserName}: {res.Text}");
+            };
+            client.ServerStopped += (_, msg) =>
+            {
+                Console.WriteLine("Server stopped");
+                client.DisconnectAsync().Wait();
             };
 
 

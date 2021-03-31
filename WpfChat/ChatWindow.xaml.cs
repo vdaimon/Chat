@@ -1,40 +1,60 @@
 ﻿using ChatProtocol;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Threading;
 using System.Windows.Threading;
 using System.Windows.Input;
+using System.Windows.Data;
+using System.Linq;
 
 namespace WPFClient
 {
     public class ChatWindowDataContext : INPC
     {
         private readonly Dispatcher _dispatcher;
-        private bool _EnableSendButtonFlag;
+        private bool _enableSendButtonFlag;
         private string _message;
         private string _receiver;
         public string Message { get => _message; set { Set(ref _message, value, () => EnableSendButtonFlag = !string.IsNullOrEmpty(value)); } }
-        public bool EnableSendButtonFlag { get => _EnableSendButtonFlag; set => Set(ref _EnableSendButtonFlag, value); }
+        public bool EnableSendButtonFlag { get => _enableSendButtonFlag; set => Set(ref _enableSendButtonFlag, value); }
         public string UserName { get; set; }
-        public string Receiver { get => _receiver; set { Set(ref _receiver, value); } }
+        public string Receiver { get => _receiver; set { Set(ref _receiver, value, () => MessageList.Refresh()); SetConnectionListElementStatus(value, false); } }
         public Client Client { get; set; }
-        public ObservableCollection<string> ConnectionList { get; } = new ObservableCollection<string>();
-        public ObservableCollection<TextMessage> Messages { get; } = new ObservableCollection<TextMessage>();
-
+        public ObservableCollection<UserListElement> ConnectionList { get; } = new ObservableCollection<UserListElement>();
+        public static ObservableCollection<MessageBase> Messages { get; } = new ObservableCollection<MessageBase>();
+        public ICollectionView MessageList { get;} = CollectionViewSource.GetDefaultView(Messages);
 
         public ChatWindowDataContext()
         {
             _dispatcher = Dispatcher.FromThread(Thread.CurrentThread);
             Client = new Client(IPAddress.Loopback, 8005);
-            Receiver = "all";
+            Receiver = null;
+            MessageList.Filter = Filter;
+        }
+
+        private void SetConnectionListElementStatus(string userName, bool value)
+        {
+            var el = ConnectionList.SingleOrDefault((x) => x.UserName == userName);
+            if (el != null)
+            {
+                el.IsAnyNewMessage = value;
+                if (value)
+                    ConnectionList.Move(ConnectionList.IndexOf(el), 0);
+            }
+        }
+        private bool Filter(object obj)
+        {
+            if (Receiver == null)
+                return obj is TextMessage;
+
+            if (!(obj is PersonalMessage pm))
+                return false;
+
+            return (pm.ReceiverName == Receiver && pm.UserName == UserName) || (pm.UserName == Receiver && pm.ReceiverName == UserName);
         }
 
         public async void StartClient(Window owner)
@@ -54,11 +74,15 @@ namespace WPFClient
                     owner.Close();
             } while (!await Client.ConnectAsync(UserName));
 
+            var unc = owner.Resources["UserNameConverter"] as UserNameConverter;
+            if (unc != null)
+                unc.OwnName = UserName;
+
             ConnectingEventHandlers();
 
             foreach (var el in await Client.GetConnectionListAsync())
             {
-                ConnectionList.Add(el);
+                ConnectionList.Add(new UserListElement(el));
             }
         }
 
@@ -67,13 +91,13 @@ namespace WPFClient
             Client.ConnectionNotificationMessageReceived += (_, cnm) =>
             {
                 var msg = (ConnectionNotificationMessage)cnm;
-                _dispatcher.Invoke(() => ConnectionList.Add(msg.UserName));
+                _dispatcher.Invoke(() => ConnectionList.Add(new UserListElement(msg.UserName)));
             };
 
             Client.DisconnectionNotificationMessageReceived += (_, dnm) =>
             {
                 var msg = (DisconnectionNotificationMessage)dnm;
-                _dispatcher.Invoke(() => ConnectionList.Remove(msg.UserName));
+                _dispatcher.Invoke(() => ConnectionList.Remove(ConnectionList.SingleOrDefault((x)=>x.UserName==msg.UserName)));
             };
 
             Client.TextMessageReceived += (_, tm) =>
@@ -93,26 +117,42 @@ namespace WPFClient
             Client.PersonalMessageReceived += (_, pm) =>
             {
                 var res = (PersonalMessage)pm;
-                _dispatcher.Invoke(() => Messages.Add(new TextMessage(res.Text, $"Personally from {res.SenderName}", Guid.NewGuid())));
+                if (res.UserName != UserName)
+                    _dispatcher.Invoke(() => Messages.Add(res));
+            };
+
+            Client.ServerStopped += (_, ss) =>
+            {
+                _dispatcher.Invoke(() =>
+                {
+                    Messages.Add(new TextMessage("The server has stopped", "Server", Guid.NewGuid()));
+                    ConnectionList.Clear();
+                });
+            };
+
+            Messages.CollectionChanged += (s, e) =>
+            {
+                var msg = Messages[Messages.Count - 1];
+                if (msg is PersonalMessage pm && pm.UserName != Receiver && pm.UserName != UserName)
+                    SetConnectionListElementStatus(pm.UserName, true);
             };
         }
 
         public async Task DisconnectAsync()
         {
            await Client.DisconnectAsync();
-           
         }
         public async void SendTextAsync()
         {
 
             if (Receiver != null)
             {
-                Messages.Add(new TextMessage(Message, $"You to {Receiver}", Guid.NewGuid()));
+                Messages.Add(new PersonalMessage(UserName, Receiver, Message, Guid.NewGuid()));
                 await Client.SendPersonallyMessage(Receiver, Message);
             }
             else
             {
-                Messages.Add(new TextMessage(Message, "You", Guid.NewGuid()));
+                Messages.Add(new TextMessage(Message, UserName, Guid.NewGuid()));
                 await Client.SendTextMessageAsync(Message);
             }
             Message = null;
@@ -132,6 +172,11 @@ namespace WPFClient
 
             _dataContext = new ChatWindowDataContext();
             DataContext = _dataContext;
+
+            _dataContext.MessageList.CollectionChanged += (s, e) =>
+            {
+                MessageViewer.ScrollToBottom();
+            };
 
             Loaded += (s, e) => _dataContext.StartClient(this);
             Closing += ClosingHandler;

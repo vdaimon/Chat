@@ -23,6 +23,7 @@ namespace ChatProtocol
         public event EventHandler<object> DisconnectionNotificationMessageReceived;
         public event EventHandler<object> ServerStopNotificationMessageReceived;
         public event EventHandler<object> PersonalMessageReceived;
+        public event EventHandler<object> ServerStopped;
 
         public Client (IPAddress addr, int port)
         {
@@ -130,8 +131,16 @@ namespace ChatProtocol
                     ThreadPool.QueueUserWorkItem(DataHandler, data);
                 }
             }
-            catch (Exception)
+            catch (System.IO.IOException ex)
             {
+                if (ex.GetType() == typeof (System.IO.IOException))
+                    if (ServerStopped != null)
+                        ServerStopped(this, null);
+                
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 

@@ -3,10 +3,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WpfChat"
+        xmlns:local="clr-namespace:WPFClient"
         mc:Ignorable="d"
-        Title="AuthorizationWindow" Height="400" Width="600"
+        Title="Chat" Height="400" Width="600"
         KeyDown="Window_KeyDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <local:UserNameConverter x:Key="UserNameConverter"/>
+            <local:UserListElementConverter x:Key="UserListElementConverter"/>
+
+            <Style TargetType="ListBoxItem" x:Key="ConnectionList">
+                <Setter Property="Content" Value="{Binding UserName}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsAnyNewMessage}" Value="True">
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="TabIndex" Value="0"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,7 +33,7 @@
         <!--Main button panel-->
         <Grid Grid.Row="0">
             <StackPanel Orientation="Horizontal">
-                <Button Content="Settings" Margin="2" Padding="5"/>
+                <Button Content="Info" Margin="2" Padding="5"/>
             </StackPanel>
         </Grid>
 
@@ -33,10 +50,10 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBox Grid.Row="0" Text="Connected clients:" Margin="2" Padding="5"/>
-                <ListBox Grid.Row="1" ItemsSource="{Binding ConnectionList}"
-                         SelectedItem="{Binding Receiver}"
-                         Margin="2"/>
+                <TextBox Grid.Row="0" Text="Connected clients:" Margin="2" Padding="5" BorderThickness="0"/>
+                <ListBox Name="ClientList" Grid.Row="1" ItemsSource="{Binding ConnectionList}"
+                         SelectedItem="{Binding Receiver, Converter={StaticResource UserListElementConverter}}"
+                         Margin="2" ItemContainerStyle="{StaticResource ConnectionList}"/>
             </Grid>
 
             <!--Chat window-->
@@ -47,50 +64,85 @@
                 </Grid.RowDefinitions>
 
                 <!--Message view window-->
-                <ListBox ItemsSource="{Binding Messages}"
-                         Margin="2">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="2.5" 
-                                    Padding="5"
-                                    CornerRadius="5"
-                                    BorderThickness="1"
-                                    BorderBrush="Black"
-                                    Background="Ivory">
-                                <StackPanel Orientation="Vertical">
-                                    <TextBlock Text="{Binding UserName}"
+                <ScrollViewer Name="MessageViewer"  HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding MessageList}"
+                         Margin="2"
+                         Name="Messages"
+                         HorizontalContentAlignment="Stretch"
+                         MaxWidth="600"
+                         HorizontalAlignment="Left">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Margin" Value="2.5,2.5,100,2.5"/>
+                                            <Setter Property="Padding" Value="5"/>
+                                            <Setter Property="CornerRadius" Value="5"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Setter Property="BorderBrush" Value="Black"/>
+                                            <Setter Property="Background" Value="Ivory"/>
+                                            <Setter Property="MaxWidth" Value="300"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding UserName, Converter={StaticResource UserNameConverter}}" Value="you">
+                                                    <Setter Property="Margin" Value="100,2.5,2.5,2.5"/>
+                                                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Text="{Binding UserName, Converter={StaticResource UserNameConverter}}"
                                                Padding="2.5"
-                                               FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding Text}"
+                                               FontWeight="Bold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding UserName, Converter={StaticResource UserNameConverter}}" Value="you">
+                                                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Text}"
+                                               TextWrapping="Wrap"
                                                Padding="2.5"/>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
 
                 <!--Message sending window-->
-                <StackPanel Grid.Row="1">
-                    <Grid>
+                    <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
+                        
                         <TextBlock Grid.Column="0"
-                                   Margin="2" Padding="5"
-                                   Text="to"/>
+                                   Margin="2,2,0,2" Padding="5,5,0,5"
+                                   Text="to "/>
+                        
                         <TextBlock Grid.Column="1"
-                                   Margin="2" Padding="5"
-                                   Text="{Binding Receiver, UpdateSourceTrigger=PropertyChanged}"/>
+                                   Margin="0,2,2,2" Padding="0,5,5,5"
+                                   ToolTip="Select client from the list or press ESC to select a general chat" 
+                                   Text="{Binding Receiver, Converter={StaticResource UserNameConverter} , UpdateSourceTrigger=PropertyChanged}"/>
+
                         <TextBox Grid.Column="2" Name="MessageBox" Margin="2" Padding="5"
+                                 TextWrapping="Wrap"
                                  Text="{Binding Message, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </Grid>
-                    <Button Content="Send" Margin="2" Padding="5"
+
+                        <Button Grid.Column="3" Content="Send" Margin="2" Padding="5"
                             Click="SendButton_Click"
+                            VerticalAlignment="Bottom"
                             IsDefault="True"
                             IsEnabled="{Binding EnableSendButtonFlag}"/>
-                </StackPanel>
+                    </Grid>
             </Grid>
         </Grid>
     </Grid>

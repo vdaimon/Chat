@@ -16,7 +16,7 @@ namespace ChatServer
         static readonly object _lock = new object();
         static readonly List<ClientAttributes> _connections = new List<ClientAttributes>();
 
-        static async Task SendToEveryone(ClientAttributes client, IGetBytes message)
+        static async Task SendToEveryone(IGetBytes message, ClientAttributes excludedClient = null)
         {
             List<ClientAttributes> connections;
             lock (_lock)
@@ -26,7 +26,7 @@ namespace ChatServer
 
             foreach (var el in connections)
             {
-                if (el != client)
+                if (el != excludedClient)
                     await el.ClientCommunicator.SendAsync(message);
             }
 
@@ -66,7 +66,7 @@ namespace ChatServer
 
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + client.Socket.RemoteEndPoint + $": client {name} connected");
 
-                        await SendToEveryone(client, new ConnectionNotificationMessage(name, Guid.NewGuid()));
+                        await SendToEveryone(new ConnectionNotificationMessage(name, Guid.NewGuid()), client);
                         break;
                     }
 
@@ -80,7 +80,7 @@ namespace ChatServer
                         }
                         Console.WriteLine(DateTime.Now.ToShortTimeString() + $": {client.ClientName}: {text}");
                         await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.MessageSendSuccessfully, tm.TransactionId));
-                        await SendToEveryone(client, new TextMessage(text, client.ClientName, Guid.NewGuid()));
+                        await SendToEveryone(new TextMessage(text, client.ClientName, Guid.NewGuid()), client);
                         break;
                     }
 
@@ -111,7 +111,7 @@ namespace ChatServer
                         string name = dm.UserName;
                         if (name == null)
                             return;
-                        await SendToEveryone(client, dm);
+                        await SendToEveryone(dm , client);
                         break;
                     }
                 case PersonalMessage pm:
@@ -129,7 +129,7 @@ namespace ChatServer
                         }
                         await client.ClientCommunicator.SendAsync(new ServerResponse(ResponseType.MessageSendSuccessfully, pm.TransactionId));
                         await receiver.ClientCommunicator.SendAsync(pm);
-                        Console.WriteLine($"from {pm.SenderName} to {pm.ReceiverName}: {pm.Text}");
+                        Console.WriteLine($"from {pm.UserName} to {pm.ReceiverName}: {pm.Text}");
                         break;
                     }
             }
@@ -175,11 +175,16 @@ namespace ChatServer
 
         static void Main(string[] args)
         {
-            var listener = new Listener(IPAddress.Parse(args[0]), int.Parse(args[1]));
+            var listener = new Listener(IPAddress.Loopback, 8005);
             listener.Start(HandleConnection);
 
-            Console.ReadLine();
-            listener.Stop();
+            var cmd = Console.ReadLine();
+            if (cmd == "end")
+            { 
+                SendToEveryone(new ServerStopNotificationMessage()).Wait();
+                listener.Stop();
+            }
+            
 
         }
     }

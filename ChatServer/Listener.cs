@@ -30,6 +30,7 @@ namespace ChatServer
 
         public void Stop()
         {
+            //_listener.Shutdown(SocketShutdown.Send);
             _listener.Close();
         }
     }
