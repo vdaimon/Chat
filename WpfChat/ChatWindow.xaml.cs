@@ -15,21 +15,31 @@ namespace WPFClient
 {
     public class ChatWindowDataContext : INPC
     {
-        private readonly Dispatcher _dispatcher;
-        private bool _enableSendButtonFlag;
-        private string _message;
-        private UserListElement _receiver;
-        public string Message { get => _message; set { Set(ref _message, value, () => EnableSendButtonFlag = !string.IsNullOrEmpty(value)); } }
-        public bool EnableSendButtonFlag { get => _enableSendButtonFlag; set => Set(ref _enableSendButtonFlag, value); }
         public string UserName { get; set; }
+        public Client Client { get; set; }
+        private readonly Dispatcher _dispatcher;
 
+        private bool _enableSendButtonFlag;
+        public bool EnableSendButtonFlag
+        {
+            get => _enableSendButtonFlag;
+            set => Set(ref _enableSendButtonFlag, value);
+        }
+
+        private string _message;
+        public string Message 
+        { 
+            get => _message; 
+            set => Set(ref _message, value, () => EnableSendButtonFlag = !string.IsNullOrEmpty(value)); 
+        }
+
+        private UserListElement _receiver;
         public UserListElement Receiver
         { 
             get => _receiver;
             set => Set(ref _receiver, value, () => OnRecevierChanged(value));
         }
 
-        public Client Client { get; set; }
         public ObservableCollection<UserListElement> ConnectionList { get; } = new ObservableCollection<UserListElement>();
         public ObservableCollection<MessageBase> Messages { get; } = new ObservableCollection<MessageBase>();
 
